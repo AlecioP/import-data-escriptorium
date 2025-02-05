@@ -2,8 +2,15 @@ import time
 import pyautogui
 from pathlib import Path
 
+from argparse import ArgumentParser
 
-IMPORT_FOLDER = "C:\\Users\\Administrator\\Downloads\\emanuela_transkribus_xmlNimg"
+parser = ArgumentParser(description="Automatic import of data into escriptorium")
+
+parser.add_argument("--import_folder",type="str",help="Path to root directory of data to import",nargs=1,required=True)
+
+ARGS = parser.parse_args()
+
+IMPORT_FOLDER = ARGS.schema_file[0]
 
 PROJECT_NAME_FROM_URL = "grema_open"
 
