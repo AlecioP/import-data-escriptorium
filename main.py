@@ -10,12 +10,7 @@ parser.add_argument("--import_folder",type="str",help="Path to root directory of
 
 ARGS = parser.parse_args()
 
-IMPORT_FOLDER = ARGS.schema_file[0]
-
-PROJECT_NAME_FROM_URL = "grema_open"
-
-project_url = f"http://localhost:8080/project/{PROJECT_NAME_FROM_URL}/documents"
-
+IMPORT_FOLDER = ARGS.import_folder[0]
 
 IMAGES_DIR = "./screenshots/"
 
