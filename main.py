@@ -1,4 +1,5 @@
 import time
+import re
 import pyautogui
 from pathlib import Path
 
@@ -105,13 +106,31 @@ for f in Path(IMPORT_FOLDER).glob("*/"):
     pyautogui.press("enter")
     # paste all names of images each surrounded by double quotes
     files_string  = ""
-    images = [i for format in ["jpg","jpeg","png"] for i in (f / DOC_ID).glob(f"*.{format}")]
+    images = list( [i for format in ["jpg","jpeg","png"] for i in (f / DOC_ID).glob(f"*.{format}")] )
     # pathlib.glob does not expand brace expansion so alternative is the one above
     # images = (f / DOC_ID).glob("*.{jpg,jpeg,png}")
     for img in images:
          print(img)
          files_string = f"{files_string} \"{img.name}\""
-    
+
+    if len(files_string) > 250:
+            for img in images:
+                # Check if matches single filenames patterns 
+                REGEX1 = "\d{4}_(\d{2}_\d{4}_\d{3})"
+                REGEX2 = "\d{4}_(\d{2}_\d{4})_\w+_\w+(_\d{3})"
+                REGEX3 = "\d{4}_(\d{2}_\d{4})_\w+_\w+_\d{4}(_\d{3})"
+                REGEX4 = "\d{4}_(\d_\d{4}_\d{3})"
+                REGEX5 = "\d{4}_(\d{2}_\d{4})_\w+_\w+_\d{3}_(_\d{3})"
+
+                regs = [REGEX1,REGEX2,REGEX3,REGEX4,REGEX5]
+                for reg in regs:
+                    r_match =  re.search(reg,img.stem)
+                    if not ( r_match is None) :
+                        new_file_stem = ""
+                        for m in r_match.groups():
+                            new_file_stem += m
+                        files_string.replace(img.stem, new_file_stem)
+                        img.rename(img.with_stem(new_file_stem))
     # This sequence empirically seems to work. Chrome (Versione 133.0.6943.53) Open file dialog (Windows 11 Enterprise 10.0.26100 build 26100)
     pyautogui.press("enter")
     pyautogui.press("enter")
@@ -122,7 +141,15 @@ for f in Path(IMPORT_FOLDER).glob("*/"):
     pyautogui.press("enter")
     pyautogui.press("enter")
 
-    clickImage("back_to_doc_list.png",CONF=0.9)
+    RETRY = 0
+    while True:
+        try:
+            clickImage("back_to_doc_list.png",CONF=0.9)
+            break
+        except pyautogui.ImageNotFoundException:
+             RETRY += 1
+             if RETRY > 3:
+                  break
 
     with open("QUEUE_DONE.TXT","a") as fd:
          fd.write(DOC_ID + "\n")
