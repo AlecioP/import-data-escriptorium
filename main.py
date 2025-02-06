@@ -7,7 +7,7 @@ from argparse import ArgumentParser
 
 parser = ArgumentParser(description="Automatic import of data into escriptorium")
 
-parser.add_argument("--import_folder",type="str",help="Path to root directory of data to import",nargs=1,required=True)
+parser.add_argument("--import_folder",type=str,help="Path to root directory of data to import",nargs=1,required=True)
 
 ARGS = parser.parse_args()
 
@@ -67,11 +67,12 @@ for f in Path(IMPORT_FOLDER).glob("*/"):
         files_string = f"{files_string} \"{img.name}\""
 
     if len(files_string) > 250:
-        count = 0
+        count = 1
         for img in images:
-            new_stem = f"{DOC_ID}_{count:03}"
-            files_string.replace(img.stem,new_stem)
+            new_stem = f"{DOC_ID}_{count:03}i"
+            files_string = files_string.replace(img.stem,new_stem)
             img.rename(img.with_stem(new_stem))
+            count += 1 
 
     if len(files_string) > 250:
         print("SKIP because filenames string is too long after renaming")
@@ -128,11 +129,12 @@ for f in Path(IMPORT_FOLDER).glob("*/"):
     pyautogui.write(str((f / DOC_ID).resolve()))
     pyautogui.press("enter")
 
-        
+    time.sleep(1)
     # This sequence empirically seems to work. Chrome (Versione 133.0.6943.53) Open file dialog (Windows 11 Enterprise 10.0.26100 build 26100)
     pyautogui.press("enter")
     pyautogui.press("enter")
     pyautogui.press("enter")
+    time.sleep(1)
 
     pyautogui.write(files_string)
 
