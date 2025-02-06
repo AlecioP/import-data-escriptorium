@@ -77,6 +77,10 @@ try:
                 new_stem = f"{DOC_ID}_{count:03}i"
                 files_string = files_string.replace(img.stem,new_stem)
                 img.rename(img.with_stem(new_stem))
+                # Also need to rename transcription if present
+                for f1 in (f / DOC_ID).glob("*/"):
+                    if f1.parts[-1] == "page" :
+                        (f1 / (img.stem + ".xml")).rename(f1 / (new_stem + ".xml"))
                 count += 1 
 
         if len(files_string) > 250:
