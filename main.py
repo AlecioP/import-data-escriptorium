@@ -1,6 +1,8 @@
 import time
 import re
+import json
 import pyautogui
+import pyperclip
 from pathlib import Path
 
 from argparse import ArgumentParser
@@ -40,125 +42,133 @@ def chrome_url_bar():
 
 # FOR EACH FOLDER IN ROOT 
 
+MAP_FOLDER_TO_ESCR_DOC = {}
+
 Path("QUEUE_DONE.txt").touch(exist_ok=True)
 
 print("Giving you time to setup the windows. Make sure escriptorium project's browser window is visible on the screen")
 time.sleep(5)
-for f in Path(IMPORT_FOLDER).glob("*/"):
-    # ENTER ONE
-    DOC_ID = list(f.glob("*/"))[0].parts[-1]
-    # GET DOC ID
-    print(DOC_ID)
-    #print(f)
-    #print((f / DOC_ID).resolve())
+try:
+    for f in Path(IMPORT_FOLDER).glob("*/"):
+        # ENTER ONE
+        DOC_ID = list(f.glob("*/"))[0].parts[-1]
+        # GET DOC ID
+        print(DOC_ID)
+        #print(f)
+        #print((f / DOC_ID).resolve())
 
-    with open("QUEUE_DONE.txt","r") as fd:
-         if DOC_ID in fd.read():
-              print(f"Skip cause DOC_ID={DOC_ID} has already been imported")
-              continue
+        with open("QUEUE_DONE.txt","r") as fd:
+            if DOC_ID in fd.read():
+                print(f"Skip cause DOC_ID={DOC_ID} has already been imported")
+                continue
 
-    # paste all names of images each surrounded by double quotes
-    files_string  = ""
-    images = list( [i for format in ["jpg","jpeg","png"] for i in (f / DOC_ID).glob(f"*.{format}")] )
-    # pathlib.glob does not expand brace expansion so alternative is the one above
-    # images = (f / DOC_ID).glob("*.{jpg,jpeg,png}")
-    for img in images:
-        print(img)
-        files_string = f"{files_string} \"{img.name}\""
-
-    if len(files_string) > 250:
-        count = 1
+        # paste all names of images each surrounded by double quotes
+        files_string  = ""
+        images = list( [i for format in ["jpg","jpeg","png"] for i in (f / DOC_ID).glob(f"*.{format}")] )
+        # pathlib.glob does not expand brace expansion so alternative is the one above
+        # images = (f / DOC_ID).glob("*.{jpg,jpeg,png}")
         for img in images:
-            new_stem = f"{DOC_ID}_{count:03}i"
-            files_string = files_string.replace(img.stem,new_stem)
-            img.rename(img.with_stem(new_stem))
-            count += 1 
+            print(img)
+            files_string = f"{files_string} \"{img.name}\""
 
-    if len(files_string) > 250:
-        print("SKIP because filenames string is too long after renaming")
-        continue
+        if len(files_string) > 250:
+            count = 1
+            for img in images:
+                new_stem = f"{DOC_ID}_{count:03}i"
+                files_string = files_string.replace(img.stem,new_stem)
+                img.rename(img.with_stem(new_stem))
+                count += 1 
 
-    # TODO (optional) undo renaming after import
+        if len(files_string) > 250:
+            print("SKIP because filenames string is too long after renaming")
+            continue
 
-    # click "create document" button
-    clickImage("create_document.png",CONF=0.9,CLICK_N=2)
-    # enter DOC ID
-    clickImage("name.png",CONF=0.9)
-    pyautogui.write(DOC_ID)
-    # click "----------" 
-    clickImage("dots.png",CONF=0.9)
-    # type latin
-    pyautogui.write("latin")
-    # click "Latin" screenshot
-    clickImage("latin.png",CONF=0.9)
-    # click create button
-    clickImage("ok_create.png",CONF=0.9)
-    # MACRO click url bar
-    chrome_url_bar()
-    #Copy to clipboard to get Doc ID in escriptorium
-    pyautogui.hotkey('ctrl','c') 
-    # arrow right
-    pyautogui.press("right")
-    # delete 5 chars (edit/) 
-    keys_sequence = []
-    for times in range(0,len("edit/")):
-         keys_sequence.append("backspace")
-    pyautogui.press(keys_sequence,interval=1)
-    # type "images"
-    pyautogui.write("images")
-    pyautogui.press("enter")
-    # Wait to load 1 second
-    time.sleep(1)
-    # click "upload" screenshot
-    RETRY = 0
-    while True:
-        try:
-            clickImage("upload.png",CONF=0.9)
-            break
-        except pyautogui.ImageNotFoundException:
-             RETRY += 1
-             if RETRY > 3:
-                  break
+        # TODO (optional) undo renaming after import
 
-    # MACRO click explorer address bar
-    pyautogui.press("f4")
-    pyautogui.hotkey("ctrl","a")
-    pyautogui.press("backspace")
+        # click "create document" button
+        clickImage("create_document.png",CONF=0.9,CLICK_N=2)
+        # enter DOC ID
+        clickImage("name.png",CONF=0.9)
+        pyautogui.write(DOC_ID)
+        # click "----------" 
+        clickImage("dots.png",CONF=0.9)
+        # type latin
+        pyautogui.write("latin")
+        # click "Latin" screenshot
+        clickImage("latin.png",CONF=0.9)
+        # click create button
+        clickImage("ok_create.png",CONF=0.9)
+        # MACRO click url bar
+        chrome_url_bar()
+        #Copy to clipboard to get Doc ID in escriptorium
+        pyautogui.hotkey('ctrl','c') 
+        time.sleep(1)
+        MAP_FOLDER_TO_ESCR_DOC[str((f  / DOC_ID).resolve())] = pyperclip.paste()
+        # arrow right
+        pyautogui.press("right")
+        # delete 5 chars (edit/) 
+        keys_sequence = []
+        for times in range(0,len("edit/")):
+            keys_sequence.append("backspace")
+        pyautogui.press(keys_sequence,interval=1)
+        # type "images"
+        pyautogui.write("images")
+        pyautogui.press("enter")
+        # Wait to load 1 second
+        time.sleep(1)
+        # click "upload" screenshot
+        RETRY = 0
+        while True:
+            try:
+                clickImage("upload.png",CONF=0.9)
+                break
+            except pyautogui.ImageNotFoundException:
+                RETRY += 1
+                if RETRY > 3:
+                    break
 
-    # type DOC_ID folder
-    pyautogui.write(str((f / DOC_ID).resolve()))
-    pyautogui.press("enter")
+        # MACRO click explorer address bar
+        pyautogui.press("f4")
+        pyautogui.hotkey("ctrl","a")
+        pyautogui.press("backspace")
 
-    time.sleep(1)
-    # This sequence empirically seems to work. Chrome (Versione 133.0.6943.53) Open file dialog (Windows 11 Enterprise 10.0.26100 build 26100)
-    pyautogui.press("enter")
-    pyautogui.press("enter")
-    pyautogui.press("enter")
-    time.sleep(1)
+        # type DOC_ID folder
+        pyautogui.write(str((f / DOC_ID).resolve()))
+        pyautogui.press("enter")
 
-    pyautogui.write(files_string)
+        time.sleep(1)
+        # This sequence empirically seems to work. Chrome (Versione 133.0.6943.53) Open file dialog (Windows 11 Enterprise 10.0.26100 build 26100)
+        pyautogui.press("enter")
+        pyautogui.press("enter")
+        pyautogui.press("enter")
+        time.sleep(1)
 
-    pyautogui.press("enter")
-    pyautogui.press("enter")
+        pyautogui.write(files_string)
 
-    RETRY = 0
-    while True:
-        try:
-            clickImage("back_to_doc_list.png",CONF=0.9)
-            break
-        except pyautogui.ImageNotFoundException:
-             RETRY += 1
-             if RETRY > 3:
-                  break
+        pyautogui.press("enter")
+        pyautogui.press("enter")
 
-    with open("QUEUE_DONE.TXT","a") as fd:
-         fd.write(DOC_ID + "\n")
+        RETRY = 0
+        while True:
+            try:
+                clickImage("back_to_doc_list.png",CONF=0.9)
+                break
+            except pyautogui.ImageNotFoundException:
+                RETRY += 1
+                if RETRY > 3:
+                    break
 
-    print("To stop press ctrl+c TWO TIMES (5 seconds)")
-    time.sleep(5)
+        with open("QUEUE_DONE.TXT","a") as fd:
+            fd.write(DOC_ID + "\n")
 
-# FIND (i) screenshot on address bar
+        print("To stop press ctrl+c TWO TIMES (5 seconds)")
+        time.sleep(5)
+except KeyboardInterrupt :
+    print("ctrl + c pressed. hope you did it when you could do it because rollback is not implemented")
+    # TODO rollback last iteration
 
-# FIND (star) screenshot on address bar
+f_to_url = Path("./folder_to_url.json")
+f_to_url.touch()
 
-# click in the middle
+with open(f_to_url,"w") as fd:
+    json.dump(MAP_FOLDER_TO_ESCR_DOC,fd)
