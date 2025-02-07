@@ -11,8 +11,6 @@ screenshots
 
 |-- [create_document.png](./screenshots/create_document.png)
 
-|-- [documents.png](./screenshots/documents.png)
-
 |-- [dots.png](./screenshots/dots.png)
 
 |-- [import.png](./screenshots/import.png)

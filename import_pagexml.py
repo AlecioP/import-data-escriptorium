@@ -1,6 +1,7 @@
 import time
 import json
 import pyautogui
+import pygetwindow 
 from pathlib import Path
 import shutil
 
@@ -28,12 +29,23 @@ FACTOR = 1
 
 
 def clickImage(IMG,CONF=0.9,GREY=False,CLICK_N=1):
-	# 4 element tuple
-	toFind = IMAGES_DIR+IMG
-	location = pyautogui.locateOnScreen(toFind,grayscale=GREY)
-	x,y = pyautogui.center(location)
-	pyautogui.click(x/FACTOR,y/FACTOR,clicks=CLICK_N,interval=1)
-	return (x,y)
+    # 4 element tuple
+    toFind = IMAGES_DIR+IMG
+    location = None
+    RETRY = 0
+    while True:
+        try:
+            location = pyautogui.locateOnScreen(toFind,grayscale=GREY)
+            break
+        except pyautogui.ImageNotFoundException:
+            RETRY += 1 
+            print(f"Failed to locate \"{IMG}\" on screen. Try {RETRY}. Retrying in 0.5 seconds")
+            if RETRY > 5:
+                return
+            time.sleep(0.5)
+    x,y = pyautogui.center(location)
+    pyautogui.click(x/FACTOR,y/FACTOR,clicks=CLICK_N,interval=1)
+    return (x,y)
 
 def chrome_url_bar():
     pyautogui.hotkey("alt","d")
@@ -60,16 +72,24 @@ try:
                 print(f"Skip cause DOC_ID={DOC_ID} has already been imported")
                 continue
 
-        # Gain focus
-        clickImage("documents_list.png",CLICK_N=2)
-        # paste url related to current document
-        chrome_url_bar()
-        pyautogui.press("backspace")
         path_key = str((f / DOC_ID).resolve())
         document_url = PATH_TO_URL.get(path_key,None)
         if document_url is None:
             print(f"SKIP because cannot find url for path {path_key}")
             continue
+
+        # Gain focus
+        #WINDOW_TITLE = "eScriptorium - My Documents"
+        WINDOW_TITLE = "Chrome"
+        windows : list[pygetwindow.BaseWindow] = pygetwindow.getWindowsWithTitle(WINDOW_TITLE)
+        if len(windows) == 0 :
+            print(f"No window named {WINDOW_TITLE}. Exit")
+            exit(-1)
+        windows[0].activate()
+        # paste url related to current document
+        chrome_url_bar()
+        pyautogui.press("backspace")
+
         pyautogui.write(document_url.replace("edit","images"))
         pyautogui.press("enter")
         # Redirect so wait
@@ -94,11 +114,13 @@ try:
         pyautogui.press("enter")
         time.sleep(1)
 
-        shutil.make_archive(base_name=str(f / DOC_ID / "page").resolve(),format="zip",base_dir=str(f / DOC_ID / "page"))
+        shutil.make_archive(base_name=str((f / DOC_ID / "page").resolve()),format="zip",base_dir=str(f / DOC_ID / "page"))
+
+        time.sleep(5)
 
         pyautogui.write("\"page.zip\"")
 
-        pyautogui.press("enter")
+        
         pyautogui.press("enter")
 
         clickImage("name_transcription.png")
