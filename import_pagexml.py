@@ -114,6 +114,7 @@ try:
         pyautogui.press("enter")
         time.sleep(1)
 
+        (f / DOC_ID / "page.zip").unlink(missing_ok=True)
         shutil.make_archive(base_name=str((f / DOC_ID / "page").resolve()),format="zip",base_dir=str(f / DOC_ID / "page"))
 
         time.sleep(5)
