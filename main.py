@@ -42,7 +42,12 @@ def chrome_url_bar():
 
 # FOR EACH FOLDER IN ROOT 
 
+MAP_JSON_PATH = "./folder_to_url.json"
 MAP_FOLDER_TO_ESCR_DOC = {}
+if Path(MAP_JSON_PATH).exists():
+    with open(Path(MAP_JSON_PATH),"r") as fd:
+        MAP_FOLDER_TO_ESCR_DOC = json.load(fd)
+
 
 Path("QUEUE_DONE.txt").touch(exist_ok=True)
 
@@ -171,7 +176,7 @@ except KeyboardInterrupt :
     print("ctrl + c pressed. hope you did it when you could do it because rollback is not implemented")
     # TODO rollback last iteration
 
-f_to_url = Path("./folder_to_url.json")
+f_to_url = Path(MAP_JSON_PATH)
 f_to_url.touch()
 
 with open(f_to_url,"w") as fd:
