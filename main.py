@@ -85,6 +85,9 @@ try:
                 # Also need to rename transcription if present
                 for f1 in (f / DOC_ID).glob("*/"):
                     if f1.parts[-1] == "page" :
+                        with open((f1 / (img.stem + ".xml") ),"rw") as fd:
+                            new_content = fd.read().replace((img.stem,new_stem))
+                            fd.write(new_content)
                         (f1 / (img.stem + ".xml")).rename(f1 / (new_stem + ".xml"))
                 count += 1 
 
