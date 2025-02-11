@@ -67,7 +67,7 @@ try:
         #print((f / DOC_ID).resolve())
 
         with open("QUEUE_DONE.txt","r") as fd:
-            if DOC_ID in fd.read():
+            if (DOC_ID + "\n") in fd.read():
                 print(f"Skip cause DOC_ID={DOC_ID} has already been imported")
                 continue
 
@@ -98,7 +98,7 @@ try:
                 count += 1 
 
         if len(files_string) > 250:
-            print("SKIP because filenames string is too long after renaming")
+            print(f"SKIP because filenames string is too long after renaming {DOC_ID}")
             continue
 
         # TODO (optional) undo renaming after import
