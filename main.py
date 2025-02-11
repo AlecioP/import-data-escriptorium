@@ -20,24 +20,28 @@ IMAGES_DIR = "./screenshots/"
 FACTOR = 1
 
 
-def clickImage(IMG,CONF : float,GREY=False,CLICK_N=1):
-	# 4 element tuple
-	toFind = IMAGES_DIR+IMG
-	location = pyautogui.locateOnScreen(toFind,grayscale=GREY)
-	x,y = pyautogui.center(location)
-	pyautogui.click(x/FACTOR,y/FACTOR,clicks=CLICK_N,interval=1)
-	return (x,y)
+def clickImage(IMG,CONF=0.9,GREY=False,CLICK_N=1):
+    # 4 element tuple
+    toFind = IMAGES_DIR+IMG
+    location = None
+    RETRY = 0
+    while True:
+        try:
+            location = pyautogui.locateOnScreen(toFind,grayscale=GREY)
+            break
+        except pyautogui.ImageNotFoundException:
+            RETRY += 1 
+            print(f"Failed to locate \"{IMG}\" on screen. Try {RETRY}. Retrying in 0.5 seconds")
+            if RETRY > 5:
+                return
+            time.sleep(0.5)
+    x,y = pyautogui.center(location)
+    pyautogui.click(x/FACTOR,y/FACTOR,clicks=CLICK_N,interval=1)
+    return (x,y)
 
 def chrome_url_bar():
     pyautogui.hotkey("alt","d")
     return
-    find1 = IMAGES_DIR + "chrome_info.png"
-    find2 = IMAGES_DIR + "chrome_star.png"
-    loc1 = pyautogui.locateOnScreen(find1)
-    loc2 = pyautogui.locateOnScreen(find2)
-    click_x = loc1.left + loc1.width ((loc2.left - (loc1.left + loc1.width))/2 )
-    click_y = loc1.top + (loc1.height/2)
-    pyautogui.click(click_x,click_y,clicks=1,interval=1)
 
 
 # FOR EACH FOLDER IN ROOT 
@@ -85,8 +89,10 @@ try:
                 # Also need to rename transcription if present
                 for f1 in (f / DOC_ID).glob("*/"):
                     if f1.parts[-1] == "page" :
-                        with open((f1 / (img.stem + ".xml") ),"rw") as fd:
-                            new_content = fd.read().replace((img.stem,new_stem))
+                        new_content = ""
+                        with open((f1 / (img.stem + ".xml") ),"r",encoding="utf-8") as fd:
+                            new_content = fd.read().replace(img.stem,new_stem)
+                        with open((f1 / (img.stem + ".xml") ),"w",encoding="utf-8") as fd:
                             fd.write(new_content)
                         (f1 / (img.stem + ".xml")).rename(f1 / (new_stem + ".xml"))
                 count += 1 
