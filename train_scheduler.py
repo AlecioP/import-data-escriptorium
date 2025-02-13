@@ -1,3 +1,4 @@
+import datetime
 import time
 import requests
 import pyautogui
@@ -167,6 +168,7 @@ while True:
 
         if (task_state is None) or (task_state != "SUCCESS" ):
             print(f"Train task {LATEST_TASK} not finished yet. Going to sleep for {SLEEP_MINUTES} minutes")
+            print(f"Now is {datetime.datetime.now()}")
             time.sleep(60 * SLEEP_MINUTES)
             continue
         break
